@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#SBATCH --partition=rapids
+#SBATCH --time=1:00:00
+#SBATCH --ntasks=1
+#SBATCH --job-name RNAquantification
+#SBATCH --output="/share/ceph/wym219group/shared/erroutfiles/harshal/%j.%N.out"
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=nmd424@lehigh.edu
+
+#Navigate to the proper directory
+cd /share/ceph/wym219group/shared/projects/LiverExpression/PhylloDHippo
+
+#Load salmon, index using present reference rna.fna file
+module load salmon
+salmon index -t rna.fna -i rna_index
+
+#Be sure to update (C&P) relevant accession number below (SRR*) so Salmon can find present read fastq files
+for fn in data1/SRR1657904;
+do \
+samp=`basename ${fn}`; \
+echo "Processing sample ${samp}" ;\
+salmon quant -i rna_index -l A \
+         -1 data1/${samp}_1.fastq \
+         -2 data1/${samp}_2.fastq \
+         -p 8 --validateMappings -o quants/${samp}_quant;\
+done
+
+
