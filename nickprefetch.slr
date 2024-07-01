@@ -1,0 +1,39 @@
+#!/bin/bash
+
+#SBATCH --partition=rapids
+#SBATCH --time=5:00:00
+#SBATCH --ntasks=1
+#SBATCH --job-name prefetchFasterq
+#SBATCH --output="/share/ceph/wym219group/shared/erroutfiles/harshal/%j.%N.out"
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=nmd424@lehigh.edu
+
+#cd ${/share/ceph/wym219group/shared/projects/LiverExpression/}
+
+#Use this to define your accession number
+MYACC="SRR1657904"
+
+#Add the path to the sra-toolkit
+export PATH=$PATH:/share/ceph/wym219group/shared/bin/sratoolkit.3.1.0-centos_linux64/bin
+
+#Navigate to the directory where you want to put the read data
+cd /share/ceph/wym219group/shared/projects/LiverExpression/PhylloDHippo
+
+#Configure the sra-toolkit to download to this directory
+vdb-config --prefetch-to-cwd
+
+#"Prefetch" the data and specify a large maximum file size to avoid any file size errors during download
+echo "Prefetching $MYACC at `date`."
+vdb-dump $MYACC --info
+prefetch $MYACC --max-size 420000000000
+
+#Then "dump" the prefetched data
+echo "Dumping $MYACC at `date`."
+fasterq-dump $MYACC
+
+#Hopefully this worked!
+echo "Finished getting data for $MYACC at `date`."
+
+#Move read files into data1 folder for Salmon to find/map
+mv ${MYACC}_1.fastq data1
+mv ${MYACC}_2.fastq data1
